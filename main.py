@@ -1,9 +1,7 @@
 import os
 
 from customtkinter import *
-from tkinter import font
-
-# branch alteration
+#from tkinter import font
 
 CONFIG = {
     "theme": "light",
@@ -16,7 +14,6 @@ CONFIG = {
 COLOR_CONFIG = {
     "main_color": "white",
     "text_color": "black",
-    #"secondary_color": "white",
     "secondary_text_color": "gray",
     "button_color": "#d1d1d1",
     "button_hover": "#e3e2e1",
@@ -231,7 +228,7 @@ class MainApp(CTk):
             COLOR_CONFIG = {
             "main_color": "white",
             "text_color": "black",
-            "secondary_color": "light_gray",
+            "secondary_text_color": "gray",
             "button_color": "#d1d1d1",
             "button_hover": "#e3e2e1",
             "button_text": "#424242" 
@@ -240,7 +237,7 @@ class MainApp(CTk):
             COLOR_CONFIG = {
             "main_color": "black",
             "text_color": "white",
-            "secondary_color": "light_gray",
+            "secondary_text_color": "gray",
             "button_color": "gray",
             "button_hover": "light gray",
             "button_text": "black" 
@@ -325,6 +322,8 @@ class Preferences(CTkToplevel):
         self.resizable(width=False, height=False)
         self.attributes("-topmost", True)
         self.geometry("600x400")
+        
+        self.actual_page = None
 
         self.create_widgets()
 
@@ -345,17 +344,20 @@ class Preferences(CTkToplevel):
 
         self.page_selector = self.PageSelector(self.side_frame)
         
-
     def toggle_page(self, page):
 
         if page == "settings":
-            print("settings")
-            self.actual_page.destroy()
+            if self.actual_page:
+                self.actual_page.destroy()
+            self.actual_page = self.SettingsPage(self.main_frame)
+            self.actual_page.pack(fill="both", expand=True, pady=20, padx=20)
         elif page == "shortcuts":
+            if self.actual_page:
+                self.actual_page.destroy()
             self.actual_page = self.ShortcutsPage(self.main_frame)
-            self.actual_page.pack(fill="both", expand=True, pady=20, padx=30)
+            self.actual_page.pack(fill="both", expand=True, pady=20, padx=20)
 
-
+        
 
 
     class PageSelector(CTkFrame):
@@ -379,44 +381,33 @@ class Preferences(CTkToplevel):
                 text_color=COLOR_CONFIG["secondary_text_color"],
                 anchor="w"
             )
-
             self.tab_title.pack(fill="x", ipady=20)
 
             # create settings page button
-            self.settings_button = CTkButton(
-                self,
-                text="> Settings",
-                corner_radius=0,
-                font=(CONFIG["default_font"], 14),
-                fg_color=COLOR_CONFIG["main_color"],
-                bg_color=COLOR_CONFIG["main_color"],
-                text_color=COLOR_CONFIG["secondary_text_color"],
-                hover=False,
-                text_color_disabled=COLOR_CONFIG["button_text"],
-                anchor="w",
-                command=self.settings_page_pressed
-            )
-            
-            self.settings_button.pack(fill="x", pady=2)
-
+            self.settings_button = CTkButton(self, text="> Settings", command=self.settings_page_pressed)
             # create the shortcuts page button
-            self.shortcuts_button = CTkButton(
-                self,
-                text="> Shortcuts",
+            self.shortcuts_button = CTkButton(self,text="> Shortcuts", command=self.shortcut_page_pressed)
+            
+            # configure the buttons styles
+            buttons = [self.settings_button, self.shortcuts_button]
+
+            for button in buttons:
+                button.configure(
                 corner_radius=0,
                 font=(CONFIG["default_font"], 14),
                 fg_color=COLOR_CONFIG["main_color"],
                 bg_color=COLOR_CONFIG["main_color"],
                 text_color=COLOR_CONFIG["secondary_text_color"],
                 hover=False,
-                text_color_disabled=COLOR_CONFIG["button_text"],
-                anchor="w",
-                command=self.shortcut_page_pressed
+                text_color_disabled=COLOR_CONFIG["text_color"],
+                anchor="w"
             )
-            self.shortcuts_button.pack(fill="x", pady=2)
-            
+                # pack every button
+                button.pack(fill="x", pady=2)
+
             # bind the buttons to make the hover effect
             self.bind_hover()
+            self.settings_page_pressed()
             
 
         def bind_hover(self, bind_settings=True, bind_shortcuts=True):
@@ -470,6 +461,62 @@ class Preferences(CTkToplevel):
             # grab the main menu window and toggle the page
             self.prefs_window.toggle_page("shortcuts")
         
+    class SettingsPage(CTkFrame):
+        """Create the settings page for the preferences window"""
+
+        def __init__(self, parent):
+            super().__init__(master=parent)
+
+            self.configure(fg_color=COLOR_CONFIG["main_color"])
+            # create the page title
+            self.title_label = CTkLabel(
+                self,
+                text="Settings",
+                font=(CONFIG["default_font"], 20, "bold"),
+                fg_color=COLOR_CONFIG["main_color"], 
+                text_color=COLOR_CONFIG["text_color"], 
+                bg_color=COLOR_CONFIG["main_color"], 
+                justify="left",
+                anchor="w"
+            )
+            self.title_label.pack(fill="x")
+            # create a title / content separator
+            self.separator = CTkLabel(
+                self,
+                text="_____________________________________",
+                font=(CONFIG["default_font"], 14),
+                fg_color=COLOR_CONFIG["main_color"], 
+                text_color=COLOR_CONFIG["secondary_text_color"], 
+                bg_color=COLOR_CONFIG["main_color"], 
+                justify="left",
+                anchor="w"
+            )
+            self.separator.pack(fill="x")
+
+            # creating widgets
+
+
+
+
+            self.wrap_button = CTkCheckBox(
+                self,
+                text="Wrap Text",
+                font=(CONFIG["default_font"], 12),
+                fg_color=COLOR_CONFIG["main_color"], 
+                text_color=COLOR_CONFIG["text_color"], 
+                bg_color=COLOR_CONFIG["main_color"],
+                corner_radius=0,
+                border_width=2,
+                checkbox_height=20,
+                checkbox_width=20,
+                checkmark_color=COLOR_CONFIG["text_color"],
+                hover_color=COLOR_CONFIG["button_hover"],
+                border_color=COLOR_CONFIG["button_color"]
+                )
+            self.wrap_button.pack(fill="x", anchor="w", pady=10, padx=20)
+
+
+
 
     class ShortcutsPage(CTkFrame):
         """Create the shortcuts page for the preferences window"""
@@ -478,11 +525,10 @@ class Preferences(CTkToplevel):
             super().__init__(master=parent)
 
             self.configure(fg_color=COLOR_CONFIG["main_color"])
-            
             # create the page title
             self.title_label = CTkLabel(
                 self,
-                text="Shortcuts\n",
+                text="Shortcuts",
                 font=(CONFIG["default_font"], 20, "bold"),
                 fg_color=COLOR_CONFIG["main_color"], 
                 text_color=COLOR_CONFIG["text_color"], 
@@ -490,9 +536,20 @@ class Preferences(CTkToplevel):
                 justify="left",
                 anchor="w"
             )
+            self.title_label.pack(fill="x")
+            # create a title / content separator
+            self.separator = CTkLabel(
+                self,
+                text="_______________________________________\n",
+                font=(CONFIG["default_font"], 14),
+                fg_color=COLOR_CONFIG["main_color"], 
+                text_color=COLOR_CONFIG["secondary_text_color"], 
+                bg_color=COLOR_CONFIG["main_color"], 
+                justify="left",
+                anchor="w"
+            )
+            self.separator.pack(fill="x")
 
-            self.title_label.pack(fill="x", padx=10)
-           
             # configure the shortcuts frame
             self.shortcuts_frame = CTkScrollableFrame(self, fg_color=COLOR_CONFIG["main_color"])
             self.shortcuts_frame.pack(expand=True, fill="both")
@@ -541,7 +598,7 @@ class Preferences(CTkToplevel):
                     text=f"{desc}", 
                     font=(CONFIG["default_font"], 14), 
                     fg_color=COLOR_CONFIG["main_color"], 
-                    text_color=COLOR_CONFIG["text_color"], 
+                    text_color=COLOR_CONFIG["secondary_text_color"], 
                     bg_color=COLOR_CONFIG["main_color"], 
                     anchor="w"
                     )

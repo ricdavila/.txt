@@ -2,4 +2,4 @@
 
 With an emphasis on fluidity and ease of use, .txt is fully optimized for keyboard navigation, allowing users to perform essential actions — such as opening, saving, and creating files — entirely through intuitive keyboard shortcuts, eliminating the need for mouse interactions.
 
-The editor also provides a range of customization options, including 05 font styles, light and dark themes, adjustable margin widths, and scalable font sizes.
+The editor also provides a range of customization options, including different fonts, light and dark themes, adjustable margin widths, and scalable font sizes.
