@@ -3,6 +3,16 @@ import os
 from customtkinter import *
 #from tkinter import font
 
+PREFERENCES = {
+    "wrap text": True,
+    "display actual font": True,
+    "display actual file": True,
+    "show word count": True,
+    "show character count": True,
+    "view font size": False,
+    "view margin size": False
+}
+
 CONFIG = {
     "theme": "light",
     "font": "Consolas",
@@ -37,21 +47,27 @@ class MainApp(CTk):
         self.bind("<Escape>", lambda event: self.quit())
 
         # create the widgets and shortcuts
-        self.create_widgets()
+        self.create_text_editor()
+        self.create_bottom_bar()
         self.bind_shortcuts()
 
         # active popup var
         self.active_popup = None
-    
 
-    def create_widgets(self):
-        """Create the main widgets"""
+        # manage the preferences window
+        self.preferences_window = None
 
-        # TEXT FRAME
+        # FILE MANAGEMENT VARIABLES
+        self.actual_file = None
+        self.last_saved_text = ""
 
+    def create_text_editor(self):
+        """Create the text editor"""
+
+        # create the text editor frame
         self.text_frame = CTkFrame(self, corner_radius=0, fg_color="white")
         self.text_frame.pack(expand=True, fill="both")
-
+        # create the text editor
         self.text_editor = CTkTextbox(
             self.text_frame, font=(CONFIG["font"], CONFIG["font_size"]), 
             corner_radius=0, fg_color="white", text_color="#4a4a4a", 
@@ -62,32 +78,40 @@ class MainApp(CTk):
 
         # bind key pressing to verify text changes
         self.text_editor.bind("<KeyRelease>", self.text_changed)
+
+    def create_bottom_bar(self, wich_widgets="all"):
+        """Create the bottom bar widgets"""
         
-        # BOTTOM BAR
+        if wich_widgets == "all":
+            self.bottom_frame = CTkFrame(self, height=40, corner_radius=0, bg_color=COLOR_CONFIG["main_color"], fg_color=COLOR_CONFIG["main_color"])
+            self.bottom_frame.pack(fill="x", padx=20)
 
-        self.bottom_frame = CTkFrame(self, height=40, corner_radius=0, bg_color=COLOR_CONFIG["main_color"], fg_color=COLOR_CONFIG["main_color"])
-        self.bottom_frame.pack(fill="x", padx=20)
+            self.bottom_frame.columnconfigure((1, 2, 3, 4, 5), weight=1)
+            self.bottom_frame.columnconfigure(0, weight=13)
 
-        self.title_label = CTkLabel(self.bottom_frame, font=(CONFIG["default_font"], 13), text_color=COLOR_CONFIG["secondary_text_color"], text="untitled.txt")
-        self.title_label.grid(row=0, column=0, sticky="w")
+        ### REFACTOR THIS !!! ###
 
-        self.bottom_frame.columnconfigure((1, 2, 3), weight=1)
-        self.bottom_frame.columnconfigure(0, weight=13)
+        if wich_widgets == "title" or wich_widgets == "all":
+            self.title_label = CTkLabel(self.bottom_frame, font=(CONFIG["default_font"], 13), text_color=COLOR_CONFIG["secondary_text_color"], text="untitled.txt")
+            self.title_label.grid(row=0, column=0, sticky="w")
+        if wich_widgets == "chars" or wich_widgets == "all":
+            self.chars_label = CTkLabel(self.bottom_frame, font=(CONFIG["default_font"], 13), text_color=COLOR_CONFIG["secondary_text_color"], text="C: 541")
+            self.chars_label.grid(row=0, column=5, sticky="e")
+        if wich_widgets == "word_count" or wich_widgets == "all":
+            self.word_count_label = CTkLabel(self.bottom_frame, font=(CONFIG["default_font"], 13), text_color=COLOR_CONFIG["secondary_text_color"], text="W: 16")
+            self.word_count_label.grid(row=0, column=4, sticky="e")
+        if wich_widgets == "margin":
+            self.margin_label = CTkLabel(self.bottom_frame, font=(CONFIG["default_font"], 13), text_color=COLOR_CONFIG["secondary_text_color"], text=f"M: {CONFIG["margin"]}")
+            self.margin_label.grid(row=0, column=1, sticky="e")
+        if wich_widgets == "font_size":
+            self.font_size_label = CTkLabel(self.bottom_frame, font=(CONFIG["default_font"], 13), text_color=COLOR_CONFIG["secondary_text_color"], text=f"FS: {CONFIG["font_size"]}")
+            self.font_size_label.grid(row=0, column=2, sticky="e")
+        if wich_widgets == "actual_font" or wich_widgets == "all":
+            self.actual_font_label = CTkLabel(self.bottom_frame, font=(CONFIG["default_font"], 13), text_color=COLOR_CONFIG["secondary_text_color"], text=CONFIG["font"])
+            self.actual_font_label.grid(row=0, column=3, sticky="e")
+        
 
-        self.chars_label = CTkLabel(self.bottom_frame, font=(CONFIG["default_font"], 13), text_color=COLOR_CONFIG["secondary_text_color"], text="C: 541")
-        self.chars_label.grid(row=0, column=3, sticky="e")
 
-        self.word_count_label = CTkLabel(self.bottom_frame, font=(CONFIG["default_font"], 13), text_color=COLOR_CONFIG["secondary_text_color"], text="W: 16")
-        self.word_count_label.grid(row=0, column=2, sticky="e")
-
-        self.actual_font_label = CTkLabel(self.bottom_frame, font=(CONFIG["default_font"], 13), text_color=COLOR_CONFIG["secondary_text_color"], text=CONFIG["font"])
-        self.actual_font_label.grid(row=0, column=1, sticky="e")
-
-        # FILE MANAGEMENT VARIABLES
-
-        self.actual_file = None
-        self.last_saved_text = ""
-    
     def bind_shortcuts(self):
         """Bind keyboard shortcuts to corresponding functions"""
 
@@ -115,14 +139,17 @@ class MainApp(CTk):
         # grab the actual text
         text = self.text_editor.get("1.0", "end-1c")
         # get the chars and word count and updates the labels
-        self.chars_label.configure(text=f"C: {len(text)}")
-        self.word_count_label.configure(text=f"W: {len(text.split())}")
+        if self.chars_label:
+            self.chars_label.configure(text=f"C: {len(text)}")
+        if self.word_count_label:
+            self.word_count_label.configure(text=f"W: {len(text.split())}")
 
         # if the text is NOT equal to the last saved one, adds the * in the file name
-        if self.actual_file:
-            self.title_label.configure(text=os.path.basename(self.actual_file) + (" *" if text != self.last_saved_text else ""))
-        else:
-            self.title_label.configure(text="Untitled")
+        if self.title_label:
+            if self.actual_file:
+                self.title_label.configure(text=os.path.basename(self.actual_file) + (" *" if text != self.last_saved_text else ""))
+            else:
+                self.title_label.configure(text="Untitled")
 
     # FILE MANAGEMENT
 
@@ -196,12 +223,17 @@ class MainApp(CTk):
         CONFIG["font_size"] += 2
         self.text_editor.configure(font=(CONFIG["font"], CONFIG["font_size"]))
 
+        if self.font_size_label:
+            self.font_size_label.configure(text=f"FS: {CONFIG["font_size"]}")
+
     def decrease_font(self, event=None):
         """Decrease font size"""
 
         if CONFIG["font_size"] > 10:
             CONFIG["font_size"] -= 2
             self.text_editor.configure(font=(CONFIG["font"], CONFIG["font_size"]))
+            if self.font_size_label:
+                self.font_size_label.configure(text=f"FS: {CONFIG["font_size"]}")
     
     def next_font(self, event=None):
         """Switch to next font"""
@@ -236,7 +268,7 @@ class MainApp(CTk):
         else:
             COLOR_CONFIG = {
             "main_color": "black",
-            "text_color": "white",
+            "text_color": "#bdbdbd",
             "secondary_text_color": "gray",
             "button_color": "gray",
             "button_hover": "light gray",
@@ -278,6 +310,9 @@ class MainApp(CTk):
 
         CONFIG["margin"] += 10
         self.text_editor.configure(padx=CONFIG["margin"])
+
+        if self.margin_label:
+            self.margin_label.configure(text=f"M: {CONFIG["margin"]}")
     
     def decrease_margin(self, event=None):
         """Decrease the lateral margin"""
@@ -285,12 +320,78 @@ class MainApp(CTk):
         if CONFIG["margin"] > 10:
             CONFIG["margin"] -= 10
             self.text_editor.configure(padx=CONFIG["margin"])
+
+        if self.margin_label:
+            self.margin_label.configure(text=f"M: {CONFIG["margin"]}")
     
+    def update_preferences(self):
+        
+        ### REFACTOR THIS (URGENT!!!) ###
+
+        # wrap text
+        if PREFERENCES["wrap text"]:
+            self.text_editor.configure(wrap="word")    
+        else:
+            self.text_editor.configure(wrap="none")
+        
+        # actual font
+        if self.actual_font_label and not PREFERENCES["display actual font"]:
+            self.actual_font_label.destroy()
+            self.actual_font_label = None
+        elif not self.actual_font_label and PREFERENCES["display actual font"]:
+            self.create_bottom_bar("actual_font")
+        
+        # actual file
+        if self.title_label and not PREFERENCES["display actual file"]:
+            self.title_label.destroy()
+            self.title_label = None
+        elif not self.title_label and PREFERENCES["display actual file"]:
+            self.create_bottom_bar("title")
+        
+        # char count
+        if self.chars_label and not PREFERENCES["show character count"]:
+            self.chars_label.destroy()
+            self.chars_label = None
+        elif not self.chars_label and PREFERENCES["show character count"]:
+            self.create_bottom_bar("chars")
+        
+        # word count
+        if self.word_count_label and not PREFERENCES["show word count"]:
+            self.word_count_label.destroy()
+            self.word_count_label = None
+        elif not self.word_count_label and PREFERENCES["show word count"]:
+            self.create_bottom_bar("word_count")
+        
+        # font size
+        try:
+            if self.font_size_label and not PREFERENCES["view font size"]:
+                self.font_size_label.destroy()
+                self.font_size_label = None
+            elif not self.font_size_label and PREFERENCES["view font size"]:
+                self.create_bottom_bar("font_size")
+        except:
+            self.create_bottom_bar("font_size")
+            
+        # margin size
+        try:
+            if self.margin_label and not PREFERENCES["view margin size"]:
+                self.margin_label.destroy()
+                self.margin_label = None
+            elif not self.margin_label and PREFERENCES["view margin size"]:
+                self.create_bottom_bar("margin")
+        except:
+            self.create_bottom_bar("margin")
+
+
+
+
+
     # POPUPS AND WINDOWS MANAGEMENT
 
     def show_preferences(self, event=None):
 
-        self.preferences_window = Preferences()
+        if not self.preferences_window:
+            self.preferences_window = Preferences()
 
 
     def create_popup(self, message, only_ok_button):
@@ -319,13 +420,16 @@ class Preferences(CTkToplevel):
         # initial attributes
         self.title(" ")
         self.configure(fg_color=COLOR_CONFIG["main_color"])
-        self.resizable(width=False, height=False)
+        self.resizable(width=False, height=FALSE)
         self.attributes("-topmost", True)
-        self.geometry("600x400")
+        self.geometry("600x450")
         
         self.actual_page = None
-
+    
         self.create_widgets()
+
+        # handler exit button 
+        self.protocol("WM_DELETE_WINDOW", self.close_preferences)
 
     def create_widgets(self):
         """Create the window's widgets"""
@@ -350,12 +454,16 @@ class Preferences(CTkToplevel):
             if self.actual_page:
                 self.actual_page.destroy()
             self.actual_page = self.SettingsPage(self.main_frame)
-            self.actual_page.pack(fill="both", expand=True, pady=20, padx=20)
+            self.actual_page.pack(fill="both", expand=True, pady=5, padx=20)
         elif page == "shortcuts":
             if self.actual_page:
                 self.actual_page.destroy()
             self.actual_page = self.ShortcutsPage(self.main_frame)
-            self.actual_page.pack(fill="both", expand=True, pady=20, padx=20)
+            self.actual_page.pack(fill="both", expand=True, pady=5, padx=20)
+    
+    def close_preferences(self):
+        self.destroy()
+        self.master.preferences_window = None
 
         
 
@@ -483,7 +591,7 @@ class Preferences(CTkToplevel):
             # create a title / content separator
             self.separator = CTkLabel(
                 self,
-                text="_____________________________________",
+                text="_______________________________________\n",
                 font=(CONFIG["default_font"], 14),
                 fg_color=COLOR_CONFIG["main_color"], 
                 text_color=COLOR_CONFIG["secondary_text_color"], 
@@ -493,30 +601,75 @@ class Preferences(CTkToplevel):
             )
             self.separator.pack(fill="x")
 
-            # creating widgets
+            # content frame
+            self.options_frame = CTkFrame(self, bg_color=COLOR_CONFIG["main_color"], fg_color=COLOR_CONFIG["main_color"])
+            self.options_frame.pack(fill="both", expand=True)
+            
+            # store the created buttons for reference
+            self.buttons_dictionary = []
+            
+            # create a button for each option in preferences dict
+            for row_index, (text, value) in enumerate(PREFERENCES.items()):
+                
+                # create a new row for each option
+                self.options_frame.rowconfigure(row_index, weight=1)
 
-
-
-
-            self.wrap_button = CTkCheckBox(
-                self,
-                text="Wrap Text",
-                font=(CONFIG["default_font"], 12),
-                fg_color=COLOR_CONFIG["main_color"], 
-                text_color=COLOR_CONFIG["text_color"], 
-                bg_color=COLOR_CONFIG["main_color"],
-                corner_radius=0,
-                border_width=2,
-                checkbox_height=20,
-                checkbox_width=20,
-                checkmark_color=COLOR_CONFIG["text_color"],
-                hover_color=COLOR_CONFIG["button_hover"],
-                border_color=COLOR_CONFIG["button_color"]
+                button = CTkCheckBox(
+                    self.options_frame,
+                    text=text,
+                    font=(CONFIG["default_font"], 14),
+                    fg_color=COLOR_CONFIG["main_color"], 
+                    text_color=COLOR_CONFIG["text_color"], 
+                    bg_color=COLOR_CONFIG["main_color"],
+                    corner_radius=0,
+                    border_width=2,
+                    checkbox_height=20,
+                    checkbox_width=20,
+                    checkmark_color=COLOR_CONFIG["text_color"],
+                    hover_color=COLOR_CONFIG["button_hover"],
+                    border_color=COLOR_CONFIG["button_color"],
+                    command= lambda: self.option_clicked()
                 )
-            self.wrap_button.pack(fill="x", anchor="w", pady=10, padx=20)
+                button.pack(fill="x", anchor="w", pady=10, padx=10)
+                # if the option is true in the preferences, check the box
+                if value:
+                    button.select()
+                # append the last button to the dictionary
+                self.buttons_dictionary.append(button)
+                
+            # creating close button
+            self.close_button = CTkButton(
+                self,
+                text="Close",
+                font=(CONFIG["font"], 14), 
+                fg_color=COLOR_CONFIG["button_color"],
+                hover_color=COLOR_CONFIG["button_hover"], 
+                bg_color=COLOR_CONFIG["main_color"],
+                text_color=COLOR_CONFIG["button_text"], 
+                corner_radius=5,
+                width=80,
+                command= lambda: self.master.master.close_preferences()
+            )
+            self.close_button.pack(anchor="e", pady=10)
+    
 
+        def option_clicked(self, event=None):
+            """Update the PREFERENCES each time a checkbox is clicked"""
 
+            for button in self.buttons_dictionary:
+                # grab the text of the button
+                clicked_option = button.cget("text")
+                # grab the value of te button (0 or 1)
+                option_value = button.get()
+                # update the global dictionary
+                PREFERENCES[clicked_option] = bool(option_value)
+                # make the changes a true thing
+                app.update_preferences()
 
+        
+
+        
+            
 
     class ShortcutsPage(CTkFrame):
         """Create the shortcuts page for the preferences window"""
@@ -603,7 +756,23 @@ class Preferences(CTkToplevel):
                     anchor="w"
                     )
 
-                description_label.grid(row=row_index, column=1, sticky="we", pady=6)
+                description_label.grid(row=row_index, column=1, sticky="we", pady=5)
+            
+            # creating close button
+            self.close_button = CTkButton(
+                self,
+                text="Close",
+                font=(CONFIG["font"], 14), 
+                fg_color=COLOR_CONFIG["button_color"],
+                hover_color=COLOR_CONFIG["button_hover"], 
+                bg_color=COLOR_CONFIG["main_color"],
+                text_color=COLOR_CONFIG["button_text"], 
+                corner_radius=5,
+                width=80,
+                command= lambda: self.master.master.close_preferences()
+            )
+            self.close_button.pack(anchor="e", pady=10)
+
 
         
 
@@ -644,19 +813,29 @@ class Popup(CTkToplevel):
 
         # label widget
         self.label = CTkLabel(
-            self, text=f"{message}", bg_color=COLOR_CONFIG["main_color"], 
-            text_color=COLOR_CONFIG["text_color"], font=(CONFIG["font"], 14), wraplength=320)
-
+            self, 
+            text=f"{message}",
+            bg_color=COLOR_CONFIG["main_color"], 
+            text_color=COLOR_CONFIG["text_color"], 
+            font=(CONFIG["font"], 14), 
+            wraplength=320
+        )
         self.label.pack(padx=10, pady=15)
         
         # confirmation button
         if only_ok_button:
             self.button = CTkButton(
-                self, text="Ok", font=(CONFIG["font"], 14), 
-                fg_color=COLOR_CONFIG["button_color"], hover_color=COLOR_CONFIG["button_hover"], 
-                bg_color=COLOR_CONFIG["main_color"], text_color=COLOR_CONFIG["button_text"], 
-                corner_radius=5, width=80, command=lambda: app.destroy_popup()
-                )
+                self, 
+                text="Ok",
+                font=(CONFIG["font"], 14), 
+                fg_color=COLOR_CONFIG["button_color"],
+                hover_color=COLOR_CONFIG["button_hover"], 
+                bg_color=COLOR_CONFIG["main_color"],
+                text_color=COLOR_CONFIG["button_text"], 
+                corner_radius=5,
+                width=80,
+                command=lambda: app.destroy_popup()
+            )
 
             self.button.pack(anchor=CENTER)
 
