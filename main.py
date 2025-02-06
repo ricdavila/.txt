@@ -45,6 +45,10 @@ class MainApp(CTk):
 
         # bind "ESC" to quit 
         self.bind("<Escape>", lambda event: self.quit())
+        
+        # FILE MANAGEMENT VARIABLES
+        self.actual_file = None
+        self.last_saved_text = ""
 
         # create the widgets and shortcuts
         self.create_text_editor()
@@ -57,9 +61,7 @@ class MainApp(CTk):
         # manage the preferences window
         self.preferences_window = None
 
-        # FILE MANAGEMENT VARIABLES
-        self.actual_file = None
-        self.last_saved_text = ""
+
 
     def create_text_editor(self):
         """Create the text editor"""
@@ -79,36 +81,41 @@ class MainApp(CTk):
         # bind key pressing to verify text changes
         self.text_editor.bind("<KeyRelease>", self.text_changed)
 
-    def create_bottom_bar(self, wich_widgets="all"):
+    def create_bottom_bar(self, which_widgets="all"):
         """Create the bottom bar widgets"""
         
-        if wich_widgets == "all":
+        if which_widgets == "all":
             self.bottom_frame = CTkFrame(self, height=40, corner_radius=0, bg_color=COLOR_CONFIG["main_color"], fg_color=COLOR_CONFIG["main_color"])
             self.bottom_frame.pack(fill="x", padx=20)
 
-            self.bottom_frame.columnconfigure((1, 2, 3, 4, 5), weight=1)
+            self.bottom_frame.columnconfigure((1, 2, 3, 4, 5), weight=0)
             self.bottom_frame.columnconfigure(0, weight=13)
 
         ### REFACTOR THIS !!! ###
 
-        if wich_widgets == "title" or wich_widgets == "all":
-            self.title_label = CTkLabel(self.bottom_frame, font=(CONFIG["default_font"], 13), text_color=COLOR_CONFIG["secondary_text_color"], text="untitled.txt")
+        if which_widgets == "title" or which_widgets == "all":
+            if self.actual_file:
+                text = self.text_editor.get("1.0", "end-1c")
+                self.title_label = CTkLabel(self.bottom_frame, font=(CONFIG["default_font"], 13), text_color=COLOR_CONFIG["secondary_text_color"], text=os.path.basename(self.actual_file) + (" *" if text != self.last_saved_text else ""))
+                #self.title_label.configure(text=os.path.basename(self.actual_file) + (" *" if text != self.last_saved_text else ""))
+            else:
+                self.title_label = CTkLabel(self.bottom_frame, font=(CONFIG["default_font"], 13), text_color=COLOR_CONFIG["secondary_text_color"], text="Untitled")
             self.title_label.grid(row=0, column=0, sticky="w")
-        if wich_widgets == "chars" or wich_widgets == "all":
-            self.chars_label = CTkLabel(self.bottom_frame, font=(CONFIG["default_font"], 13), text_color=COLOR_CONFIG["secondary_text_color"], text="C: 541")
-            self.chars_label.grid(row=0, column=5, sticky="e")
-        if wich_widgets == "word_count" or wich_widgets == "all":
-            self.word_count_label = CTkLabel(self.bottom_frame, font=(CONFIG["default_font"], 13), text_color=COLOR_CONFIG["secondary_text_color"], text="W: 16")
-            self.word_count_label.grid(row=0, column=4, sticky="e")
-        if wich_widgets == "margin":
+        if which_widgets == "chars" or which_widgets == "all":
+            self.chars_label = CTkLabel(self.bottom_frame, font=(CONFIG["default_font"], 13), text_color=COLOR_CONFIG["secondary_text_color"], text=f"C: {len(self.text_editor.get("1.0", "end-1c"))}")
+            self.chars_label.grid(row=0, column=5, sticky="e", ipadx=20)
+        if which_widgets == "word_count" or which_widgets == "all":
+            self.word_count_label = CTkLabel(self.bottom_frame, font=(CONFIG["default_font"], 13), text_color=COLOR_CONFIG["secondary_text_color"], text=f"W: {len(self.text_editor.get("1.0", "end-1c").split())}")
+            self.word_count_label.grid(row=0, column=4, sticky="e", ipadx=20)
+        if which_widgets == "margin":
             self.margin_label = CTkLabel(self.bottom_frame, font=(CONFIG["default_font"], 13), text_color=COLOR_CONFIG["secondary_text_color"], text=f"M: {CONFIG["margin"]}")
-            self.margin_label.grid(row=0, column=1, sticky="e")
-        if wich_widgets == "font_size":
+            self.margin_label.grid(row=0, column=1, sticky="e", ipadx=20)
+        if which_widgets == "font_size":
             self.font_size_label = CTkLabel(self.bottom_frame, font=(CONFIG["default_font"], 13), text_color=COLOR_CONFIG["secondary_text_color"], text=f"FS: {CONFIG["font_size"]}")
-            self.font_size_label.grid(row=0, column=2, sticky="e")
-        if wich_widgets == "actual_font" or wich_widgets == "all":
+            self.font_size_label.grid(row=0, column=2, sticky="e", ipadx=20)
+        if which_widgets == "actual_font" or which_widgets == "all":
             self.actual_font_label = CTkLabel(self.bottom_frame, font=(CONFIG["default_font"], 13), text_color=COLOR_CONFIG["secondary_text_color"], text=CONFIG["font"])
-            self.actual_font_label.grid(row=0, column=3, sticky="e")
+            self.actual_font_label.grid(row=0, column=3, sticky="e", ipadx=20)
         
 
 
@@ -244,10 +251,11 @@ class MainApp(CTk):
         index = (fonts.index(CONFIG["font"]) + 1) % len(fonts)
         # set the font with the new index as the actual font
         CONFIG["font"] = fonts[index]
-        # updates the widget
+        # update the text editor
         self.text_editor.configure(font=(CONFIG["font"], CONFIG["font_size"]))
-
-        self.actual_font_label.configure(text=CONFIG["font"])
+        # update the label 
+        if self.actual_font_label:
+            self.actual_font_label.configure(text=CONFIG["font"])
         
     def toggle_theme(self, event=None):
         """Toggle the actual app theme"""
@@ -359,6 +367,7 @@ class MainApp(CTk):
         if self.word_count_label and not PREFERENCES["show word count"]:
             self.word_count_label.destroy()
             self.word_count_label = None
+            self.bottom_frame.columnconfigure(4, weight=0)
         elif not self.word_count_label and PREFERENCES["show word count"]:
             self.create_bottom_bar("word_count")
         
@@ -381,10 +390,6 @@ class MainApp(CTk):
                 self.create_bottom_bar("margin")
         except:
             self.create_bottom_bar("margin")
-
-
-
-
 
     # POPUPS AND WINDOWS MANAGEMENT
 
