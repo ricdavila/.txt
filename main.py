@@ -44,7 +44,7 @@ class MainApp(CTk):
         set_appearance_mode(CONFIG["theme"])
 
         # bind "ESC" to quit 
-        self.bind("<Escape>", lambda event: self.quit())
+        #self.bind("<Escape>", lambda event: self.quit())
         
         # FILE MANAGEMENT VARIABLES
         self.actual_file = None
@@ -73,7 +73,7 @@ class MainApp(CTk):
         self.text_editor = CTkTextbox(
             self.text_frame, font=(CONFIG["font"], CONFIG["font_size"]), 
             corner_radius=0, fg_color="white", text_color="#4a4a4a", 
-            undo=True, wrap="word", scrollbar_button_color="#d1d1d1",
+            undo=True, wrap="word", scrollbar_button_color=COLOR_CONFIG["button_color"],
         )
 
         self.text_editor.pack(expand=True, fill="both", padx=CONFIG["margin"], pady=25)
@@ -230,18 +230,24 @@ class MainApp(CTk):
         CONFIG["font_size"] += 2
         self.text_editor.configure(font=(CONFIG["font"], CONFIG["font_size"]))
 
-        if self.font_size_label:
-            self.font_size_label.configure(text=f"FS: {CONFIG["font_size"]}")
-
+        try:
+            if self.font_size_label:
+                self.font_size_label.configure(text=f"FS: {CONFIG["font_size"]}")
+        except:
+            pass
+    
     def decrease_font(self, event=None):
         """Decrease font size"""
 
         if CONFIG["font_size"] > 10:
             CONFIG["font_size"] -= 2
             self.text_editor.configure(font=(CONFIG["font"], CONFIG["font_size"]))
-            if self.font_size_label:
-                self.font_size_label.configure(text=f"FS: {CONFIG["font_size"]}")
-    
+            try:
+                if self.font_size_label:
+                    self.font_size_label.configure(text=f"FS: {CONFIG["font_size"]}")
+            except:
+                pass
+        
     def next_font(self, event=None):
         """Switch to next font"""
         
@@ -254,8 +260,11 @@ class MainApp(CTk):
         # update the text editor
         self.text_editor.configure(font=(CONFIG["font"], CONFIG["font_size"]))
         # update the label 
-        if self.actual_font_label:
-            self.actual_font_label.configure(text=CONFIG["font"])
+        try:
+            if self.actual_font_label:
+                self.actual_font_label.configure(text=CONFIG["font"])
+        except:
+            pass
         
     def toggle_theme(self, event=None):
         """Toggle the actual app theme"""
@@ -295,7 +304,7 @@ class MainApp(CTk):
         self.configure(fg_color=COLOR_CONFIG["main_color"])
         self.text_frame.configure(fg_color=COLOR_CONFIG["main_color"])
 
-        self.text_editor.configure(fg_color=COLOR_CONFIG["main_color"], text_color=COLOR_CONFIG["text_color"])
+        self.text_editor.configure(fg_color=COLOR_CONFIG["main_color"], text_color=COLOR_CONFIG["text_color"], scrollbar_button_color=COLOR_CONFIG["button_color"])
 
         self.bottom_frame.configure(fg_color=COLOR_CONFIG["main_color"])
 
@@ -311,16 +320,59 @@ class MainApp(CTk):
                 fg_color=COLOR_CONFIG["button_color"], 
                 hover_color=COLOR_CONFIG["button_hover"], 
                 text_color=COLOR_CONFIG["button_text"]
-                )        
+                )
+        
+        if self.preferences_window:
+            
+            self.preferences_window.configure(fg_color=COLOR_CONFIG["main_color"])
+
+            self.preferences_window.main_frame.configure(fg_color=COLOR_CONFIG["main_color"])
+            self.preferences_window.side_frame.configure(fg_color=COLOR_CONFIG["main_color"])
+
+            self.preferences_window.page_selector.configure(fg_color=COLOR_CONFIG["main_color"])
+            self.preferences_window.page_selector.tab_title.configure(fg_color=COLOR_CONFIG["main_color"], bg_color=COLOR_CONFIG["main_color"], text_color=COLOR_CONFIG["secondary_text_color"])
+            self.preferences_window.page_selector.settings_button.configure(fg_color=COLOR_CONFIG["main_color"], bg_color=COLOR_CONFIG["main_color"], text_color=COLOR_CONFIG["secondary_text_color"], text_color_disabled=COLOR_CONFIG["text_color"])
+            self.preferences_window.page_selector.shortcuts_button.configure(fg_color=COLOR_CONFIG["main_color"], bg_color=COLOR_CONFIG["main_color"], text_color=COLOR_CONFIG["secondary_text_color"], text_color_disabled=COLOR_CONFIG["text_color"])
+            
+            if self.preferences_window.actual_page.__class__ == self.preferences_window.SettingsPage:
+                
+                self.preferences_window.actual_page.configure(fg_color=COLOR_CONFIG["main_color"])
+
+                self.preferences_window.actual_page.title_label.configure(fg_color=COLOR_CONFIG["main_color"], text_color=COLOR_CONFIG["text_color"], bg_color=COLOR_CONFIG["main_color"])
+                self.preferences_window.actual_page.separator.configure(fg_color=COLOR_CONFIG["main_color"], text_color=COLOR_CONFIG["secondary_text_color"], bg_color=COLOR_CONFIG["main_color"])
+                self.preferences_window.actual_page.options_frame.configure(bg_color=COLOR_CONFIG["main_color"], fg_color=COLOR_CONFIG["main_color"])
+
+                for button in self.preferences_window.actual_page.buttons_dictionary:
+                    button.configure(fg_color=COLOR_CONFIG["text_color"], text_color=COLOR_CONFIG["text_color"], bg_color=COLOR_CONFIG["main_color"], checkmark_color=COLOR_CONFIG["main_color"], hover_color=COLOR_CONFIG["secondary_text_color"], border_color=COLOR_CONFIG["secondary_text_color"])
+                
+                self.preferences_window.actual_page.close_button.configure(fg_color=COLOR_CONFIG["button_color"], bg_color=COLOR_CONFIG["main_color"], hover_color=COLOR_CONFIG["button_hover"], text_color=COLOR_CONFIG["button_text"])
+
+            if self.preferences_window.actual_page.__class__ == self.preferences_window.ShortcutsPage:
+                
+                self.preferences_window.actual_page.configure(fg_color=COLOR_CONFIG["main_color"])
+
+                self.preferences_window.actual_page.title_label.configure(fg_color=COLOR_CONFIG["main_color"], text_color=COLOR_CONFIG["text_color"], bg_color=COLOR_CONFIG["main_color"])
+                self.preferences_window.actual_page.separator.configure(fg_color=COLOR_CONFIG["main_color"], text_color=COLOR_CONFIG["secondary_text_color"], bg_color=COLOR_CONFIG["main_color"])
+
+                self.preferences_window.actual_page.shortcuts_frame.configure(fg_color=COLOR_CONFIG["main_color"])
+
+                for (key, desc) in self.preferences_window.actual_page.labels_dictionary:
+                    key.configure(bg_color=COLOR_CONFIG["main_color"], fg_color=COLOR_CONFIG["main_color"], text_color=COLOR_CONFIG["text_color"])
+                    desc.configure(bg_color=COLOR_CONFIG["main_color"], fg_color=COLOR_CONFIG["main_color"], text_color=COLOR_CONFIG["secondary_text_color"])
+
+                self.preferences_window.actual_page.close_button.configure(fg_color=COLOR_CONFIG["button_color"], bg_color=COLOR_CONFIG["main_color"], hover_color=COLOR_CONFIG["button_hover"], text_color=COLOR_CONFIG["button_text"])
+
 
     def increase_margin(self, event=None):
         """Increase the lateral margin"""
 
         CONFIG["margin"] += 10
         self.text_editor.configure(padx=CONFIG["margin"])
-
-        if self.margin_label:
-            self.margin_label.configure(text=f"M: {CONFIG["margin"]}")
+        try:
+            if self.margin_label:
+                self.margin_label.configure(text=f"M: {CONFIG["margin"]}")
+        except:
+            pass
     
     def decrease_margin(self, event=None):
         """Decrease the lateral margin"""
@@ -328,9 +380,11 @@ class MainApp(CTk):
         if CONFIG["margin"] > 10:
             CONFIG["margin"] -= 10
             self.text_editor.configure(padx=CONFIG["margin"])
-
-        if self.margin_label:
-            self.margin_label.configure(text=f"M: {CONFIG["margin"]}")
+        try:
+            if self.margin_label:
+                self.margin_label.configure(text=f"M: {CONFIG["margin"]}")
+        except:
+            pass
     
     def update_preferences(self):
         
@@ -435,7 +489,8 @@ class Preferences(CTkToplevel):
 
         # handler exit button 
         self.protocol("WM_DELETE_WINDOW", self.close_preferences)
-
+        self.bind("<Escape>", lambda event: self.close_preferences())
+        self.bind("<Control-d>", lambda event: self.master.toggle_theme())
     def create_widgets(self):
         """Create the window's widgets"""
 
@@ -469,8 +524,6 @@ class Preferences(CTkToplevel):
     def close_preferences(self):
         self.destroy()
         self.master.preferences_window = None
-
-        
 
 
     class PageSelector(CTkFrame):
@@ -623,16 +676,16 @@ class Preferences(CTkToplevel):
                     self.options_frame,
                     text=text,
                     font=(CONFIG["default_font"], 14),
-                    fg_color=COLOR_CONFIG["main_color"], 
+                    fg_color=COLOR_CONFIG["text_color"], 
                     text_color=COLOR_CONFIG["text_color"], 
                     bg_color=COLOR_CONFIG["main_color"],
+                    checkmark_color=COLOR_CONFIG["main_color"],
                     corner_radius=0,
                     border_width=2,
-                    checkbox_height=20,
-                    checkbox_width=20,
-                    checkmark_color=COLOR_CONFIG["text_color"],
-                    hover_color=COLOR_CONFIG["button_hover"],
-                    border_color=COLOR_CONFIG["button_color"],
+                    checkbox_height=15,
+                    checkbox_width=15,
+                    hover_color=COLOR_CONFIG["secondary_text_color"],
+                    border_color=COLOR_CONFIG["secondary_text_color"],
                     command= lambda: self.option_clicked()
                 )
                 button.pack(fill="x", anchor="w", pady=10, padx=10)
@@ -671,11 +724,7 @@ class Preferences(CTkToplevel):
                 # make the changes a true thing
                 app.update_preferences()
 
-        
-
-        
-            
-
+    
     class ShortcutsPage(CTkFrame):
         """Create the shortcuts page for the preferences window"""
 
@@ -730,6 +779,9 @@ class Preferences(CTkToplevel):
                 "F1": "Show preferences"
             }
             
+            # store the labels for personalization needs
+            self.labels_dictionary = []
+
             # for each key-desc, create a new row and its labels
             for row_index, (key, desc) in enumerate(shortcuts.items()):
                 
@@ -762,7 +814,10 @@ class Preferences(CTkToplevel):
                     )
 
                 description_label.grid(row=row_index, column=1, sticky="we", pady=5)
-            
+
+                # add both labels to the dictionary
+                self.labels_dictionary.append((key_label, description_label))
+                
             # creating close button
             self.close_button = CTkButton(
                 self,
