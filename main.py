@@ -1,7 +1,6 @@
 import os
 
 from customtkinter import *
-#from tkinter import font
 
 PREFERENCES = {
     "wrap text": True,
@@ -37,8 +36,13 @@ class MainApp(CTk):
         super().__init__()
 
         # configure main window
+        self.window_height = 450
+        self.window_width = 800
+        self.spawn_x = int((self.winfo_screenwidth() - self.window_width)/2)
+        self.spawn_y = int((self.winfo_screenheight() - self.window_height)/2)
         self.title(".txt")
-        self.geometry("800x450")
+        #self.geometry("800x450")
+        self.geometry(f"{self.window_width}x{self.window_height}+{self.spawn_x}+{self.spawn_y}")
         self.minsize(200, 80)
         self.configure(fg_color="white")
         set_appearance_mode(CONFIG["theme"])
@@ -60,8 +64,6 @@ class MainApp(CTk):
 
         # manage the preferences window
         self.preferences_window = None
-
-
 
     def create_text_editor(self):
         """Create the text editor"""
@@ -94,9 +96,10 @@ class MainApp(CTk):
         ### REFACTOR THIS !!! ###
 
         if which_widgets == "title" or which_widgets == "all":
+
             if self.actual_file:
                 text = self.text_editor.get("1.0", "end-1c")
-                self.title_label = CTkLabel(self.bottom_frame, font=(CONFIG["default_font"], 13), text_color=COLOR_CONFIG["secondary_text_color"], text=os.path.basename(self.actual_file) + (" *" if text != self.last_saved_text else ""))
+                self.title_label = CTkLabel(self.bottom_frame, font=(CONFIG["default_font"], 13), text_color=COLOR_CONFIG["secondary_text_color"], text=os.path.basename(self.actual_file) + (" *" if text != self.last_saved_text else "") if self.actual_file else "Untitled")
                 #self.title_label.configure(text=os.path.basename(self.actual_file) + (" *" if text != self.last_saved_text else ""))
             else:
                 self.title_label = CTkLabel(self.bottom_frame, font=(CONFIG["default_font"], 13), text_color=COLOR_CONFIG["secondary_text_color"], text="Untitled")
@@ -117,8 +120,6 @@ class MainApp(CTk):
             self.actual_font_label = CTkLabel(self.bottom_frame, font=(CONFIG["default_font"], 13), text_color=COLOR_CONFIG["secondary_text_color"], text=CONFIG["font"])
             self.actual_font_label.grid(row=0, column=3, sticky="e", ipadx=20)
         
-
-
     def bind_shortcuts(self):
         """Bind keyboard shortcuts to corresponding functions"""
 
@@ -168,7 +169,6 @@ class MainApp(CTk):
         self.last_saved_text = ""
         self.title_label.configure(text="Untitled")
     
-
     def open_file(self, event=None):
         """Open a file"""
 
@@ -362,7 +362,6 @@ class MainApp(CTk):
 
                 self.preferences_window.actual_page.close_button.configure(fg_color=COLOR_CONFIG["button_color"], bg_color=COLOR_CONFIG["main_color"], hover_color=COLOR_CONFIG["button_hover"], text_color=COLOR_CONFIG["button_text"])
 
-
     def increase_margin(self, event=None):
         """Increase the lateral margin"""
 
@@ -452,7 +451,6 @@ class MainApp(CTk):
         if not self.preferences_window:
             self.preferences_window = Preferences()
 
-
     def create_popup(self, message, only_ok_button):
         """Create popups"""
 
@@ -467,7 +465,6 @@ class MainApp(CTk):
         self.active_popup.destroy()
         self.active_popup = None
 
-
 # SECUNDARY WIDGET CLASSES
 
 class Preferences(CTkToplevel):
@@ -481,7 +478,10 @@ class Preferences(CTkToplevel):
         self.configure(fg_color=COLOR_CONFIG["main_color"])
         self.resizable(width=False, height=FALSE)
         self.attributes("-topmost", True)
-        self.geometry("600x450")
+        #self.geometry("600x450")
+        self.spawn_x = int((self.winfo_screenwidth() - 600)/2)
+        self.spawn_y = int((self.winfo_screenheight() - 500)/2)
+        self.geometry(f"600x500+{self.spawn_x}+{self.spawn_y}")
         
         self.actual_page = None
     
@@ -515,6 +515,7 @@ class Preferences(CTkToplevel):
                 self.actual_page.destroy()
             self.actual_page = self.SettingsPage(self.main_frame)
             self.actual_page.pack(fill="both", expand=True, pady=5, padx=20)
+    
         elif page == "shortcuts":
             if self.actual_page:
                 self.actual_page.destroy()
@@ -524,7 +525,6 @@ class Preferences(CTkToplevel):
     def close_preferences(self):
         self.destroy()
         self.master.preferences_window = None
-
 
     class PageSelector(CTkFrame):
         """Create the buttons for selecting the pages"""
@@ -575,7 +575,6 @@ class Preferences(CTkToplevel):
             self.bind_hover()
             self.settings_page_pressed()
             
-
         def bind_hover(self, bind_settings=True, bind_shortcuts=True):
             """Manages the bindings for showing (or not) the hover effect"""
 
@@ -723,7 +722,6 @@ class Preferences(CTkToplevel):
                 PREFERENCES[clicked_option] = bool(option_value)
                 # make the changes a true thing
                 app.update_preferences()
-
     
     class ShortcutsPage(CTkFrame):
         """Create the shortcuts page for the preferences window"""
@@ -817,8 +815,8 @@ class Preferences(CTkToplevel):
 
                 # add both labels to the dictionary
                 self.labels_dictionary.append((key_label, description_label))
-                
-            # creating close button
+            
+            #creating close button
             self.close_button = CTkButton(
                 self,
                 text="Close",
@@ -831,32 +829,8 @@ class Preferences(CTkToplevel):
                 width=80,
                 command= lambda: self.master.master.close_preferences()
             )
+
             self.close_button.pack(anchor="e", pady=10)
-
-
-        
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 class Popup(CTkToplevel):
     """Simple popups class"""
@@ -869,7 +843,9 @@ class Popup(CTkToplevel):
         self.configure(fg_color=COLOR_CONFIG["main_color"])
         self.resizable(width=False, height=False)
         self.attributes("-topmost", True)
-        self.geometry("300x100")
+        self.spawn_x = int((self.winfo_screenwidth() - 300)/2)
+        self.spawn_y = int((self.winfo_screenheight() - 100)/2)
+        self.geometry(f"300x100+{self.spawn_x}+{self.spawn_y}")
 
         # label widget
         self.label = CTkLabel(
@@ -899,11 +875,11 @@ class Popup(CTkToplevel):
 
             self.button.pack(anchor=CENTER)
 
-
-
 # RUN APP
+
 
 app = MainApp()
 app.text_changed()
+print()
 #app.text_editor.focus_set()
 app.mainloop()
